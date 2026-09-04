@@ -5,7 +5,7 @@ echo "=== Iniciando a preparação do ambiente de build ==="
 mkdir -p output work/chroot
 
 apt-get update
-apt-get install -y debootstrap squashfs-tools genisoimage xorriso curl wget git unsquashfs
+apt-get install -y debootstrap squashfs-tools genisoimage xorriso curl wget git
 
 echo "=== Construindo o sistema base com Debootstrap ==="
 debootstrap --arch=amd64 noble work/chroot http://archive.ubuntu.com/ubuntu/
