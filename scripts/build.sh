@@ -32,7 +32,8 @@ apt-get install -y \
     npm \
     python3 \
     python3-pip \
-    gnome-tweaks
+    gnome-tweaks \
+    dconf-cli
 
 apt-get clean
 rm -rf /var/lib/apt/lists/*
