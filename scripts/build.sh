@@ -17,6 +17,13 @@ mount --bind /proc work/chroot/proc
 echo "=== Instalando ambiente de desenvolvimento e ferramentas essenciais ==="
 cat << 'EOF' > work/chroot/tmp/install-tools.sh
 export DEBIAN_FRONTEND=noninteractive
+
+cat << 'REPOS' > /etc/apt/sources.list
+deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse
+REPOS
+
 apt-get update
 apt-get install -y \
     ubuntu-desktop-minimal \
