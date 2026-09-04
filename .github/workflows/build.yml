@@ -1,0 +1,37 @@
+name: Build Carlinho Linux ISO
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Free Up Disk Space
+        uses: jlumbroso/free-disk-space@v5
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
+      - name: Make Build Script Executable
+        run: chmod +x scripts/build.sh
+
+      - name: Execute ISO Build Process
+        run: sudo ./scripts/build.sh
+
+      - name: Upload Generated ISO Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Carlinho-Linux-ISO
+          path: output/*.iso
+          retention-days: 7
