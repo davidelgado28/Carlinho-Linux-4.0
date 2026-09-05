@@ -103,6 +103,13 @@ EOF
 
 chroot work/chroot dconf update
 
+echo "=== Desmontando diretórios virtuais do sistema ==="
+umount work/chroot/dev || true
+umount work/chroot/sys || true
+umount work/chroot/proc || true
+
+rm -rf work/chroot/dev/* work/chroot/sys/* work/chroot/proc/*
+
 echo "=== Gerando a Imagem ISO Final ==="
 grub-mkrescue -o output/carlinho-linux-dev.iso work/chroot -- -volid "CarlinhoLinuxDev"
 
