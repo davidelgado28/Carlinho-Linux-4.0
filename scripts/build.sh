@@ -25,6 +25,7 @@ echo "=== Instalando Kernel, GRUB e Ferramentas de Desenvolvimento ==="
 cat << 'EOF' > work/chroot/tmp/install-tools.sh
 export DEBIAN_FRONTEND=noninteractive
 
+# Habilitar repositórios completos do Ubuntu
 cat << 'REPOS' > /etc/apt/sources.list
 deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
@@ -53,6 +54,7 @@ apt-get install -y \
     gnome-tweaks \
     dconf-cli
 
+# Limpar cache para otimizar espaço
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
@@ -109,6 +111,27 @@ umount work/chroot/sys || true
 umount work/chroot/proc || true
 
 rm -rf work/chroot/dev/* work/chroot/sys/* work/chroot/proc/*
+
+echo "=== Criando configuração dinâmica de boot do GRUB ==="
+mkdir -p work/chroot/boot/grub
+
+KERNEL_VERSION=$(ls work/chroot/boot/vmlinuz-* | head -n 1 | sed 's|work/chroot/boot/vmlinuz-||')
+
+if [ -z "$KERNEL_VERSION" ]; then
+    echo "Erro: Nenhum kernel foi encontrado no chroot!"
+    exit 1
+fi
+
+cat << EOF > work/chroot/boot/grub/grub.cfg
+set timeout=3
+set default=0
+
+menuentry "Carlinho Linux Dev" {
+    search --no-floppy --set=root --file /boot/vmlinuz-$KERNEL_VERSION
+    linux /boot/vmlinuz-$KERNEL_VERSION root=LABEL=CarlinhoLinuxDev ro quiet splash
+    initrd /boot/initrd.img-$KERNEL_VERSION
+}
+EOF
 
 echo "=== Gerando a Imagem ISO Final ==="
 grub-mkrescue -o output/carlinho-linux-dev.iso work/chroot -- -volid "CarlinhoLinuxDev"
