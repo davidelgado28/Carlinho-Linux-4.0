@@ -5,16 +5,23 @@ echo "=== Iniciando a preparação do ambiente de build ==="
 mkdir -p output work/chroot
 
 apt-get update
-apt-get install -y debootstrap squashfs-tools genisoimage xorriso curl wget git
+apt-get install -y debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin curl wget git mtools
 
-echo "=== Construindo o sistema base com Debootstrap ==="
+echo "=== Construindo o sistema base com Debootstrap (Ubuntu Noble) ==="
 debootstrap --arch=amd64 noble work/chroot http://archive.ubuntu.com/ubuntu/
 
 mount --bind /dev work/chroot/dev
 mount --bind /sys work/chroot/sys
 mount --bind /proc work/chroot/proc
 
-echo "=== Instalando ambiente de desenvolvimento e ferramentas essenciais ==="
+cleanup() {
+    umount work/chroot/dev || true
+    umount work/chroot/sys || true
+    umount work/chroot/proc || true
+}
+trap cleanup EXIT
+
+echo "=== Instalando Kernel, GRUB e Ferramentas de Desenvolvimento ==="
 cat << 'EOF' > work/chroot/tmp/install-tools.sh
 export DEBIAN_FRONTEND=noninteractive
 
@@ -25,7 +32,11 @@ deb http://security.ubuntu.com/ubuntu noble-security main restricted universe mu
 REPOS
 
 apt-get update
+
 apt-get install -y \
+    linux-image-generic \
+    grub-pc \
+    grub-efi-amd64-bin \
     ubuntu-desktop-minimal \
     build-essential \
     git \
@@ -53,7 +64,12 @@ rm work/chroot/tmp/install-tools.sh
 echo "=== Configurando o Papel de Parede Único ==="
 mkdir -p work/chroot/usr/share/backgrounds
 mkdir -p work/chroot/usr/share/gnome-background-properties
-cp assets/wallpaper.jpg work/chroot/usr/share/backgrounds/dev-wallpaper.jpg
+
+if [ -f assets/wallpaper.jpg ]; then
+    cp assets/wallpaper.jpg work/chroot/usr/share/backgrounds/dev-wallpaper.jpg
+else
+    touch work/chroot/usr/share/backgrounds/dev-wallpaper.jpg
+fi
 
 cat << 'EOF' > work/chroot/usr/share/gnome-background-properties/dev-wallpaper.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -86,12 +102,9 @@ picture-options='zoom'
 EOF
 
 chroot work/chroot dconf update
-umount work/chroot/dev
-umount work/chroot/sys
-umount work/chroot/proc
 
 echo "=== Gerando a Imagem ISO Final ==="
-mksquashfs work/chroot output/filesystem.squashfs -comp xz -Xbcj x86
-genisoimage -V "MeuLinux-Dev" -r -J -b boot/grub/i386-pc/eltorito.img -no-emul-boot -boot-load-size 4 -boot-info-table -o output/meu-linux-dev.iso work/chroot || true
+grub-mkrescue -o output/carlinho-linux-dev.iso work/chroot -- -volid "CarlinhoLinuxDev"
 
-echo "=== Processo concluído com sucesso! ISO gerada em output/ ==="
+echo "=== Sucesso! ISO gerada em output/ ==="
+ls -lh output/
