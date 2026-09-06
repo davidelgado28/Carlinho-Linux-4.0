@@ -2,7 +2,7 @@
 set -e
 
 echo "=== Iniciando a preparação do ambiente de build ==="
-mkdir -p output work/chroot
+mkdir -p output work/chroot work/iso/casper work/iso/boot/grub
 
 apt-get update
 apt-get install -y debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin curl wget git mtools
@@ -21,11 +21,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "=== Instalando Kernel, GRUB e Ferramentas de Desenvolvimento ==="
+echo "=== Instalando Kernel, Casper, GRUB e Ferramentas ==="
 cat << 'EOF' > work/chroot/tmp/install-tools.sh
 export DEBIAN_FRONTEND=noninteractive
 
-# Habilitar repositórios completos do Ubuntu
 cat << 'REPOS' > /etc/apt/sources.list
 deb http://archive.ubuntu.com/ubuntu/ noble main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ noble-updates main restricted universe multiverse
@@ -35,6 +34,7 @@ REPOS
 apt-get update
 
 apt-get install -y \
+    casper \
     linux-image-generic \
     grub-pc \
     grub-efi-amd64-bin \
@@ -54,7 +54,8 @@ apt-get install -y \
     gnome-tweaks \
     dconf-cli
 
-# Limpar cache para otimizar espaço
+update-initramfs -u -k all
+
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
@@ -109,11 +110,7 @@ echo "=== Desmontando diretórios virtuais do sistema ==="
 umount work/chroot/dev || true
 umount work/chroot/sys || true
 umount work/chroot/proc || true
-
-rm -rf work/chroot/dev/* work/chroot/sys/* work/chroot/proc/*
-
-echo "=== Criando configuração dinâmica de boot do GRUB ==="
-mkdir -p work/chroot/boot/grub
+trap - EXIT
 
 KERNEL_VERSION=$(ls work/chroot/boot/vmlinuz-* | head -n 1 | sed 's|work/chroot/boot/vmlinuz-||')
 
@@ -122,19 +119,31 @@ if [ -z "$KERNEL_VERSION" ]; then
     exit 1
 fi
 
-cat << EOF > work/chroot/boot/grub/grub.cfg
-set timeout=3
+echo "Copiando Kernel (vmlinuz) e Initrd para o diretório Live..."
+cp work/chroot/boot/vmlinuz-$KERNEL_VERSION work/iso/casper/vmlinuz
+cp work/chroot/boot/initrd.img-$KERNEL_VERSION work/iso/casper/initrd
+
+echo "=== Compactando o sistema de arquivos (SquashFS) ==="
+mksquashfs work/chroot work/iso/casper/filesystem.squashfs -e "boot/*" "dev/*" "proc/*" "sys/*" "tmp/*"
+
+echo "=== Criando configuração do GRUB Live ==="
+cat << EOF > work/iso/boot/grub/grub.cfg
+set timeout=5
 set default=0
 
-menuentry "Carlinho Linux Dev" {
-    search --no-floppy --set=root --file /boot/vmlinuz-$KERNEL_VERSION
-    linux /boot/vmlinuz-$KERNEL_VERSION root=LABEL=CarlinhoLinuxDev ro quiet splash
-    initrd /boot/initrd.img-$KERNEL_VERSION
+menuentry "Carlinho Linux Dev (Live Mode)" {
+    linux /casper/vmlinuz boot=casper quiet splash ---
+    initrd /casper/initrd
+}
+
+menuentry "Carlinho Linux Dev (Safe Graphics)" {
+    linux /casper/vmlinuz boot=casper nomodeset quiet splash ---
+    initrd /casper/initrd
 }
 EOF
 
 echo "=== Gerando a Imagem ISO Final ==="
-grub-mkrescue -o output/carlinho-linux-dev.iso work/chroot -- -volid "CarlinhoLinuxDev"
+grub-mkrescue -o output/carlinho-linux-dev.iso work/iso -- -volid "CarlinhoLinuxDev"
 
 echo "=== Sucesso! ISO gerada em output/ ==="
 ls -lh output/
