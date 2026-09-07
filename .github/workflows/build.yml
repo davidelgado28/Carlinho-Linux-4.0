@@ -1,0 +1,42 @@
+name: Build Carlinho OS Dev ISO
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Ferramentas de Construcao de ISO
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            debootstrap \
+            squashfs-tools \
+            xorriso \
+            grub-pc-bin \
+            grub-efi-amd64-bin \
+            mtools \
+            python3-pip \
+            python3-pil
+
+      - name: Executar Script de Compilacao da ISO
+        run: |
+          chmod +x scripts/build_iso.sh
+          chmod +x scripts/generate_wallpaper.py
+          sudo ./scripts/build_iso.sh
+
+      - name: Disponibilizar ISO para Download (GitHub Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: carlinho-dev-os-iso
+          path: carlinho-dev-os.iso
+          retention-days: 14
