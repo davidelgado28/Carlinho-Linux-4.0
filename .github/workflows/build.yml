@@ -1,0 +1,38 @@
+name: Build Carlinho Linux
+
+on:
+  workflow_dispatch:
+    inputs:
+      iso_url:
+        description: 'URL da ISO-base (Ubuntu 24.04 amd64)'
+        default: 'https://releases.ubuntu.com/24.04/ubuntu-24.04.2-desktop-amd64.iso'
+  push:
+    branches: [ main ]
+
+env:
+  ISO_URL: 'https://releases.ubuntu.com/24.04/ubuntu-24.04.2-desktop-amd64.iso'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Espaço em disco
+        run: df -h / /mnt
+
+      - name: Construir o Carlinho Linux
+        env:
+          ISO_URL: ${{ inputs.iso_url || env.ISO_URL }}
+        run: sudo bash build-iso.sh
+
+      - name: Publicar ISO como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: carlinho-1.0-amd64
+          path: /mnt/carlinho/out/carlinho-1.0-amd64.iso*
+          compression-level: 0     
+          retention-days: 14
