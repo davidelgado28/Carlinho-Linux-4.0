@@ -4,13 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       iso_url:
-        description: 'URL da ISO-base (Ubuntu 24.04 amd64)'
-        default: 'https://releases.ubuntu.com/24.04/ubuntu-24.04.2-desktop-amd64.iso'
+        description: 'URL da ISO-base (vazio = descobrir o 24.04.x mais novo)'
+        default: ''
   push:
     branches: [ main ]
-
-env:
-  ISO_URL: 'https://releases.ubuntu.com/24.04/ubuntu-24.04.2-desktop-amd64.iso'
 
 jobs:
   build:
@@ -26,7 +23,7 @@ jobs:
 
       - name: Construir o Carlinho Linux
         env:
-          ISO_URL: ${{ inputs.iso_url || env.ISO_URL }}
+          ISO_URL: ${{ inputs.iso_url }}
         run: sudo bash build-iso.sh
 
       - name: Publicar ISO como artefato
@@ -34,5 +31,5 @@ jobs:
         with:
           name: carlinho-1.0-amd64
           path: /mnt/carlinho/out/carlinho-1.0-amd64.iso*
-          compression-level: 0     
+          compression-level: 0
           retention-days: 14
