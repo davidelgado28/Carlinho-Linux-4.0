@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 command -v xorriso >/dev/null || {
   apt-get update -qq
   apt-get install -y --no-install-recommends \
-    xorriso squashfs-tools rsync wget curl grub-pc-bin isolinux
+    xorriso squashfs-tools rsync wget curl grub-pc-bin isolinux fdisk
 }
 
 mkdir -p "$WORK/tree" "$WORK/out"
@@ -105,11 +105,23 @@ BIOS_IMG=""
 for cand in boot/grub/bios.img boot/grub/i386-pc/eltorito.img isolinux/isolinux.bin; do
   if [ -f "tree/$cand" ]; then BIOS_IMG="$cand"; break; fi
 done
-EFI_IMG=$(find tree -type f -iname 'efiboot.img' | head -n1)
 [ -n "$BIOS_IMG" ] || { echo "ERRO: imagem de boot BIOS não encontrada"; find tree/boot -maxdepth 2 -type f; exit 1; }
-[ -n "$EFI_IMG" ]   || { echo "ERRO: efiboot.img não encontrado"; find tree -type f -name '*.img'; exit 1; }
-EFI_REL="${EFI_IMG#tree/}"
-echo ">>> Boot BIOS: $BIOS_IMG | Boot EFI: $EFI_REL"
+echo ">>> Boot BIOS: $BIOS_IMG"
+
+echo ">>> Extraindo partição EFI do ISO original..."
+EFI_LINE=$(fdisk -l ubuntu.iso | grep -i 'EFI' | head -n1 || true)
+[ -n "$EFI_LINE" ] || { echo "ERRO: partição EFI não encontrada no ISO base."; exit 1; }
+
+if echo "$EFI_LINE" | awk '{print $2}' | grep -q '\*'; then
+  EFI_START=$(echo "$EFI_LINE" | awk '{print $3}')
+  EFI_SECTORS=$(echo "$EFI_LINE" | awk '{print $5}')
+else
+  EFI_START=$(echo "$EFI_LINE" | awk '{print $2}')
+  EFI_SECTORS=$(echo "$EFI_LINE" | awk '{print $4}')
+fi
+
+echo ">>> EFI START=$EFI_START, SECTORS=$EFI_SECTORS"
+dd if=ubuntu.iso of=efi.img bs=512 skip="$EFI_START" count="$EFI_SECTORS" status=none
 
 if [[ "$BIOS_IMG" == isolinux/* ]]; then
   MBR_ARGS=(-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin)
@@ -131,7 +143,7 @@ xorriso -as mkisofs -r \
   -eltorito-alt-boot \
   -e '--interval:appended_partition_2:::' \
   -no-emul-boot \
-  -append_partition 2 28732ac11ff8d211ba4b00a0c93ec93b "$EFI_REL" \
+  -append_partition 2 28732ac11ff8d211ba4b00a0c93ec93b efi.img \
   -appended_part_as_gpt \
   -iso_mbr_part_type a2a0d0ebe5b9334487c068b6b72699c7 \
   --mbr-force-bootable \
