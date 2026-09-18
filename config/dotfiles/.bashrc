@@ -1,5 +1,3 @@
-# Carlinho OS - .bashrc
-
 export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 export LS_COLORS='di=1;36:ln=1;35:*.py=0;33:*.c=0;33:*.cpp=0;33:*.h=0;33'
 
