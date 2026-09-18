@@ -1,0 +1,60 @@
+name: Build Carlinho OS ISO
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          debootstrap \
+          genisoimage \
+          xorriso \
+          isolinux \
+          syslinux-efi \
+          grub-pc-bin \
+          grub-efi-amd64-bin \
+          mtools \
+          squashfs-tools \
+          rsync \
+          wget \
+          curl
+    
+    - name: Setup build environment
+      run: |
+        sudo mkdir -p /tmp/carlinho-build
+        sudo chmod -R 777 /tmp/carlinho-build
+    
+    - name: Build ISO
+      run: |
+        chmod +x scripts/*.sh
+        sudo ./scripts/build.sh
+    
+    - name: Upload ISO artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: carlinho-os
+        path: carlinho-os*.iso
+        retention-days: 30
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: carlinho-os*.iso
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
