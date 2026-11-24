@@ -1,35 +1,63 @@
-name: Build Carlinho Linux
+name: Build Carlinho-OS
 
 on:
-  workflow_dispatch:
-    inputs:
-      iso_url:
-        description: 'URL da ISO-base (vazio = descobrir o 24.04.x mais novo)'
-        default: ''
   push:
-    branches: [ main ]
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 240
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Espaço em disco
-        run: df -h / /mnt
+      - name: Install build and emulation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib nasm grub-pc-bin grub-common xorriso mtools qemu-system-x86
 
-      - name: Construir o Carlinho Linux
-        env:
-          ISO_URL: ${{ inputs.iso_url }}
-        run: sudo bash build-iso.sh
+      - name: Build bootable ISO
+        run: make CROSS= clean iso
 
-      - name: Publicar ISO como artefato
+      - name: Verify the kernel booted in QEMU
+        shell: bash
+        run: |
+          set +e
+          timeout 20s qemu-system-i386 -cdrom build/carlinho.iso -display none -serial stdio -monitor none -no-reboot -no-shutdown > build/qemu.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 124 ]; then
+            cat build/qemu.log
+            exit 1
+          fi
+          grep -F "Carlinho-OS boot OK" build/qemu.log
+          grep -F "Digite help" build/qemu.log
+
+      - name: Create checksum
+        run: cd build && sha256sum carlinho.iso > carlinho.iso.sha256
+
+      - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: carlinho-1.0-amd64
-          path: /mnt/carlinho/out/carlinho-1.0-amd64.iso*
+          name: carlinho-os-${{ github.sha }}
+          path: |
+            build/carlinho.iso
+            build/carlinho.iso.sha256
           compression-level: 0
-          retention-days: 14
+          retention-days: 30
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/carlinho.iso
+            build/carlinho.iso.sha256
