@@ -30,16 +30,21 @@ jobs:
       - name: Verify the kernel booted in QEMU
         shell: bash
         run: |
-          set +e
-          timeout 20s qemu-system-i386 -cdrom build/carlinho.iso -display none -serial stdio -monitor none -no-reboot -no-shutdown > build/qemu.log 2>&1
-          status=$?
-          set -e
-          if [ "$status" -ne 124 ]; then
-            cat build/qemu.log
-            exit 1
-          fi
+          set -o pipefail
+          {
+            sleep 5
+            printf 'sendkey l\n'
+            sleep 0.2
+            printf 'sendkey s\n'
+            sleep 0.2
+            printf 'sendkey ret\n'
+            sleep 1
+            printf 'quit\n'
+          } | timeout 20s qemu-system-i386 -cdrom build/carlinho.iso -display none -serial file:build/qemu.log -monitor stdio -no-reboot -no-shutdown
           grep -F "Carlinho-OS boot OK" build/qemu.log
+          grep -F "GRAPHICAL FRAMEBUFFER ACTIVE" build/qemu.log
           grep -F "Digite help" build/qemu.log
+          grep -F "README.txt" build/qemu.log
 
       - name: Create checksum
         run: cd build && sha256sum carlinho.iso > carlinho.iso.sha256

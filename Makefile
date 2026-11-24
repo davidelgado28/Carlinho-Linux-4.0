@@ -6,7 +6,7 @@ GRUB_FILE = grub-file
 
 CFLAGS = -std=gnu11 -ffreestanding -fno-builtin -fno-stack-protector -fno-pic -fno-pie -fno-unwind-tables -fno-asynchronous-unwind-tables -m32 -mno-sse -mno-mmx -msoft-float -O2 -Wall -Wextra -Werror -Ikernel/include
 LDFLAGS = -m32 -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,linker.ld
-C_SOURCES = kernel/kernel.c kernel/console.c kernel/gdt.c kernel/idt.c kernel/keyboard.c kernel/pit.c kernel/serial.c kernel/shell.c kernel/string.c
+C_SOURCES = kernel/kernel.c kernel/console.c kernel/fs.c kernel/gdt.c kernel/idt.c kernel/keyboard.c kernel/mouse.c kernel/pit.c kernel/serial.c kernel/shell.c kernel/string.c
 C_OBJECTS = $(patsubst kernel/%.c,build/%.o,$(C_SOURCES))
 OBJECTS = build/boot.o build/interrupts.o $(C_OBJECTS)
 
