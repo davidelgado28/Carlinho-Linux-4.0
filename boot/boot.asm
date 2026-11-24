@@ -12,6 +12,13 @@ header_start:
     dd 12
     dd _start
     align 8
+    dw 5
+    dw 0
+    dd 20
+    dd 800
+    dd 600
+    dd 32
+    align 8
     dw 0
     dw 0
     dd 8

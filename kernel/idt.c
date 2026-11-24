@@ -1,6 +1,7 @@
 #include "console.h"
 #include "idt.h"
 #include "keyboard.h"
+#include "mouse.h"
 #include "pit.h"
 #include "ports.h"
 #include "types.h"
@@ -54,8 +55,8 @@ static void remap_pic(void)
     io_wait();
     outb(0xA1, 0x01);
     io_wait();
-    outb(0x21, (u8)((master_mask & 0xFC) | 0xFC));
-    outb(0xA1, (u8)(slave_mask | 0xFF));
+    outb(0x21, (u8)((master_mask & 0xF8) | 0xF8));
+    outb(0xA1, (u8)((slave_mask & 0xEF) | 0xEF));
 }
 
 void idt_init(void)
@@ -89,6 +90,8 @@ void interrupt_handler(struct interrupt_frame *frame)
         pit_interrupt();
     } else if (vector == 33) {
         keyboard_interrupt();
+    } else if (vector == 44) {
+        mouse_interrupt();
     }
 
     if (vector >= 40) {

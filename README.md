@@ -1,8 +1,8 @@
 # Carlinho-OS
 
-Carlinho-OS is a small 32-bit x86 operating system built from a freestanding C kernel and NASM assembly. GRUB loads the kernel using the Multiboot2 protocol. The project is a native OS foundation, separate from Carlinho WebOS: browser applications and its browser-backed virtual filesystem do not run inside this kernel.
+Carlinho-OS is an experimental 32-bit x86 operating system built from a freestanding C kernel and NASM assembly. GRUB loads the kernel using the Multiboot2 protocol and requests an 800x600x32 framebuffer. The project is separate from Carlinho WebOS: its browser applications do not run inside this kernel.
 
-The kernel initializes its own GDT and IDT, remaps the PIC, configures the PIT, handles PS/2 keyboard input, writes to VGA text memory and the serial port, and provides an interactive command shell. The shell currently supports `help`, `about`, `clear`, `echo`, `uptime`, `reboot`, and `halt`. Storage, a filesystem, user processes, and graphical applications are not implemented yet.
+The kernel initializes its own GDT and IDT, remaps the PIC, configures the PIT, handles a PS/2 keyboard and mouse, and draws an 800x600 desktop with a terminal window. The shell supports `ls` (`-a`, `-l`, and paths), `pwd`, `cd`, `cat`, `echo` (including `>` and `>>`), `touch`, `mkdir` (`-p`), `rm` (`-r`), `rmdir`, `cp`, `mv`, `wc`, `head`, `tail`, `grep`, `history`, `uname`, `whoami`, `hostname`, `uptime`, `clear`, `help`, `man`, `reboot`, and `halt`. Its small filesystem is volatile RAM storage. It is not Linux and cannot run every Linux command or Linux binary: processes, a disk filesystem, pipes, permissions, and POSIX compatibility are not implemented.
 
 ## Build requirements
 
@@ -22,4 +22,4 @@ The resulting image is `build/carlinho.iso`. To build with another GCC-compatibl
 qemu-system-i386 -cdrom build/carlinho.iso
 ```
 
-The GitHub Actions workflow builds the ISO on every push and pull request, boots it in headless QEMU, and uploads the ISO and SHA-256 checksum as an artifact. Pushing a `v*` tag also publishes both files as a GitHub Release.
+The GitHub Actions workflow builds the ISO on every push and pull request, boots it in headless QEMU, checks that the graphical framebuffer starts and that `ls` prints the initial file, and uploads the ISO and SHA-256 checksum as an artifact. Pushing a `v*` tag also publishes both files as a GitHub Release.
