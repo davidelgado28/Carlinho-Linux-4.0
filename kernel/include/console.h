@@ -10,6 +10,7 @@ void console_write(const char *text);
 void console_write_u32(u32 value);
 void console_set_color(u8 foreground, u8 background);
 u8 console_is_graphical(void);
-void console_mouse_move(i32 delta_x, i32 delta_y);
+void console_mouse_event(i32 delta_x, i32 delta_y, u8 buttons);
+void console_handle_key(char character);
 
 #endif

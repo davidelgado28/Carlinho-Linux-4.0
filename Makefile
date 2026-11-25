@@ -8,7 +8,7 @@ CFLAGS = -std=gnu11 -ffreestanding -fno-builtin -fno-stack-protector -fno-pic -f
 LDFLAGS = -m32 -nostdlib -no-pie -Wl,--build-id=none -Wl,-T,linker.ld
 C_SOURCES = kernel/kernel.c kernel/console.c kernel/fs.c kernel/gdt.c kernel/idt.c kernel/keyboard.c kernel/mouse.c kernel/pit.c kernel/serial.c kernel/shell.c kernel/string.c
 C_OBJECTS = $(patsubst kernel/%.c,build/%.o,$(C_SOURCES))
-OBJECTS = build/boot.o build/interrupts.o $(C_OBJECTS)
+OBJECTS = build/boot.o build/interrupts.o build/wallpaper.o $(C_OBJECTS)
 
 .PHONY: all iso clean check
 
@@ -23,6 +23,9 @@ build/boot.o: boot/boot.asm | build
 	$(NASM) -f elf32 $< -o $@
 
 build/interrupts.o: kernel/interrupts.asm | build
+	$(NASM) -f elf32 $< -o $@
+
+build/wallpaper.o: boot/wallpaper.asm assets/carlinho-webos.rgb565 | build
 	$(NASM) -f elf32 $< -o $@
 
 build/%.o: kernel/%.c | build
