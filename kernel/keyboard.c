@@ -1,6 +1,6 @@
+#include "console.h"
 #include "keyboard.h"
 #include "ports.h"
-#include "shell.h"
 #include "types.h"
 
 static const char keymap[128] = {
@@ -90,6 +90,6 @@ void keyboard_interrupt(void)
     }
 
     if (scancode < 128 && keymap[scancode] != '\0') {
-        shell_handle_key(shifted_character(keymap[scancode]));
+        console_handle_key(shifted_character(keymap[scancode]));
     }
 }

@@ -88,7 +88,7 @@ void mouse_interrupt(void)
     if (packet_index == 3) {
         i32 delta_x = (i8)packet[1];
         i32 delta_y = (i8)packet[2];
-        console_mouse_move(delta_x, delta_y);
+        console_mouse_event(delta_x, delta_y, packet[0] & 0x07);
         packet_index = 0;
     }
 }
