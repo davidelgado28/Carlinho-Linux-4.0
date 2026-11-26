@@ -6,6 +6,9 @@ The kernel initializes its own GDT and IDT, remaps the PIC, configures the PIT, 
 
 The shell supports `ls` (`-a`, `-l`, and paths), `pwd`, `cd`, `cat`, `echo` (including `>` and `>>`), `touch`, `mkdir` (`-p`), `rm` (`-r`), `rmdir`, `cp`, `mv`, `wc`, `head`, `tail`, `grep`, `history`, `uname`, `whoami`, `hostname`, `uptime`, `clear`, `help`, `man`, `reboot`, and `halt`. Its small filesystem is volatile RAM storage. It is not Linux and cannot run every Linux command or Linux binary: processes, a disk filesystem, pipes, permissions, and POSIX compatibility are not implemented.
 
+<img width="798" height="593" alt="image" src="https://github.com/user-attachments/assets/057efe9e-f4b5-4601-bbed-4fab248eb1f9" />
+
+
 ## Build requirements
 
 Install NASM, GRUB utilities, xorriso, and an i686-elf cross-compiler. GNU Make uses `i686-elf-gcc` by default. On Debian or Ubuntu, the required GRUB and ISO packages are `grub-pc-bin`, `grub-common`, `xorriso`, and `mtools`.
